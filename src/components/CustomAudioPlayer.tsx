@@ -9,8 +9,12 @@ interface CustomAudioPlayerProps {
     playlistUrl: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ReactPlayerAny = ReactPlayer as any;
+
 export default function CustomAudioPlayer({ playlistUrl }: CustomAudioPlayerProps) {
     const [isPlaying, setIsPlaying] = useState(false);
+
     const [isReady, setIsReady] = useState(false);
     const [volume, setVolume] = useState(0.5);
     const [currentTrack, setCurrentTrack] = useState("Loading...");
@@ -98,7 +102,7 @@ export default function CustomAudioPlayer({ playlistUrl }: CustomAudioPlayerProp
 
             {/* Hidden Player */}
             <div className="hidden">
-                <ReactPlayer
+                <ReactPlayerAny
                     ref={playerRef}
                     url={playlistUrl}
                     playing={isPlaying}
@@ -112,8 +116,8 @@ export default function CustomAudioPlayer({ playlistUrl }: CustomAudioPlayerProp
                     onEnded={handleNext}
                     config={{
                         youtube: {
-                            playerVars: { showinfo: 0, controls: 0, modestbranding: 1 } as any
-                        }
+                            playerVars: { showinfo: 0, controls: 0, modestbranding: 1 }
+                        } as any
                     }}
                 />
             </div>
