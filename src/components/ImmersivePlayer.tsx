@@ -6,7 +6,6 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { EffectCoverflow, Pagination, Navigation } from "swiper/modules";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import ReactPlayer from "react-player";
 
 import "swiper/css";
 import "swiper/css/effect-coverflow";
@@ -14,53 +13,55 @@ import "swiper/css/pagination";
 import "swiper/css/navigation";
 
 // --- Data ---
-// Using YouTube for reliable audio playback while keeping the custom UI
+// TELEGRAM AUDIO BACKEND
+// 1. Upload your MP3s to your Telegram Bot.
+// 2. Get the 'file_id' for each song (using the helper script or API).
+// 3. Paste them below.
+// 4. The /api/telegram-audio route handles the secure streaming.
+
 const PLAYLIST_DATA = [
     {
         title: "When a Man Loves a Woman",
         artist: "Percy Sledge",
         coverUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music/52/82/b4/mzi.rpbsgiwt.jpg/600x600bb.jpg",
-        youtubeUrl: "https://www.youtube.com/watch?v=Y8raabzZNqw",
+        audioUrl: "/api/telegram-audio?file_id=", // TODO: Add File ID
     },
     {
         title: "Be My Baby",
         artist: "The Ronettes",
         coverUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/94/45/82/94458262-998b-3a64-5461-b9230a55643e/mzi.xefbhabm.jpg/600x600bb.jpg",
-        youtubeUrl: "https://www.youtube.com/watch?v=jZ13c6v2d1M",
+        audioUrl: "/api/telegram-audio?file_id=", // TODO: Add File ID
     },
     {
         title: "Sweetness",
         artist: "Elliot James Reay",
         coverUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/83/f3/c3/83f3c3cc-fdf2-8205-f225-732e3c353946/25UMGIM79759.rgb.jpg/600x600bb.jpg",
-        youtubeUrl: "https://www.youtube.com/watch?v=Fj219C0b1Zg", // Placeholder, using a similar vibe or actual if found. Replaced with generic romantic for reliability if specific track not on YT.
+        audioUrl: "/api/telegram-audio?file_id=", // TODO: Add File ID
     },
     {
         title: "Can't Help Falling in Love",
         artist: "Elvis Presley",
         coverUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/ec/14/ea/ec14ea7c-7886-5757-5837-6ea26c0e4e7d/dj.qusytvtz.jpg/600x600bb.jpg",
-        youtubeUrl: "https://www.youtube.com/watch?v=vGJTaP6anOU",
+        audioUrl: "/api/telegram-audio?file_id=", // TODO: Add File ID
     },
     {
         title: "In the Still of the Night",
         artist: "The Five Satins",
         coverUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music/fe/a5/77/mzi.qdnoiugs.jpg/600x600bb.jpg",
-        youtubeUrl: "https://www.youtube.com/watch?v=fBT3oDMCWpI",
+        audioUrl: "/api/telegram-audio?file_id=", // TODO: Add File ID
     },
     {
         title: "I Love You Baby",
         artist: "Frank Sinatra",
         coverUrl: "https://images.unsplash.com/photo-1514525253440-b393452e8d26?q=80&w=200&auto=format&fit=crop",
-        youtubeUrl: "https://www.youtube.com/watch?v=NoErP9oF5bM", // L-O-V-E (Nat King Cole similar vibe) or Frankie
+        audioUrl: "/api/telegram-audio?file_id=", // TODO: Add File ID
     },
 ];
 
 interface ImmersivePlayerProps {
-    playlistUrl?: string; // Kept for compat, but we use internal data
+    playlistUrl?: string; // Kept for compat
     autoStart?: boolean;
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ReactPlayerAny = ReactPlayer as any;
 
 export default function ImmersivePlayer({ autoStart = false }: ImmersivePlayerProps) {
     // --- State ---
@@ -73,8 +74,7 @@ export default function ImmersivePlayer({ autoStart = false }: ImmersivePlayerPr
     const [hasMounted, setHasMounted] = useState(false);
 
     // --- Refs ---
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const playerRef = useRef<any>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
     const dockRef = useRef<HTMLDivElement>(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const swiperRef = useRef<any>(null);
@@ -84,14 +84,39 @@ export default function ImmersivePlayer({ autoStart = false }: ImmersivePlayerPr
     // 1. Mount Check
     useEffect(() => { setHasMounted(true); }, []);
 
-    // 2. AutoStart
+    // 2. Playback Logic
+    useEffect(() => {
+        if (!audioRef.current) return;
+
+        if (isPlaying) {
+            // Basic play attempt
+            const playPromise = audioRef.current.play();
+            if (playPromise !== undefined) {
+                playPromise.catch((error) => {
+                    console.error("Autoplay prevented:", error);
+                    setIsPlaying(false);
+                });
+            }
+        } else {
+            audioRef.current.pause();
+        }
+    }, [isPlaying, currentTrackIndex]);
+
+    // 3. AutoStart
     useEffect(() => {
         if (autoStart) {
             setIsPlaying(true);
         }
     }, [autoStart]);
 
-    // 3. Scroll Observer
+    // 4. Volume
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.volume = volume;
+        }
+    }, [volume]);
+
+    // 5. Scroll Observer
     useEffect(() => {
         const observer = new IntersectionObserver(
             ([entry]) => {
@@ -136,25 +161,25 @@ export default function ImmersivePlayer({ autoStart = false }: ImmersivePlayerPr
         }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleProgress = (state: any) => {
-        if (state.played !== undefined) setProgress(state.played);
-        if (state.playedSeconds !== undefined) {
-            // We can use this if we need exact seconds
+    const handleTimeUpdate = () => {
+        if (audioRef.current) {
+            const current = audioRef.current.currentTime;
+            const dur = audioRef.current.duration;
+            if (dur > 0) {
+                setProgress(current / dur);
+            }
+            setDuration(dur || 0);
         }
     };
 
-    const handleDuration = (d: number) => {
-        setDuration(d);
+    const handleLoadedMetadata = () => {
+        if (audioRef.current) {
+            setDuration(audioRef.current.duration);
+        }
     };
 
-    const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (!playerRef.current) return;
-        const progressBar = e.currentTarget;
-        const clickPosition = (e.clientX - progressBar.getBoundingClientRect().left) / progressBar.offsetWidth;
-
-        playerRef.current.seekTo(clickPosition);
-        setProgress(clickPosition);
+    const handleEnded = () => {
+        handleNext();
     };
 
     const formatTime = (seconds: number) => {
@@ -164,30 +189,31 @@ export default function ImmersivePlayer({ autoStart = false }: ImmersivePlayerPr
         return `${min}:${sec < 10 ? "0" + sec : sec}`;
     };
 
+    const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!audioRef.current) return;
+        const progressBar = e.currentTarget;
+        const clickPosition = (e.clientX - progressBar.getBoundingClientRect().left) / progressBar.offsetWidth;
+
+        const newTime = clickPosition * duration;
+        audioRef.current.currentTime = newTime;
+        setProgress(clickPosition);
+    };
+
+
     if (!hasMounted) return null;
 
     return (
         <>
-            {/* Hidden ReactPlayer (YouTube) */}
-            <div className="hidden">
-                <ReactPlayerAny
-                    ref={playerRef}
-                    url={PLAYLIST_DATA[currentTrackIndex]?.youtubeUrl}
-                    playing={isPlaying}
-                    volume={volume}
-                    controls={false}
-                    width="0"
-                    height="0"
-                    onProgress={handleProgress}
-                    onDuration={handleDuration}
-                    onEnded={handleNext}
-                    config={{
-                        youtube: {
-                            playerVars: { showinfo: 0, controls: 0, modestbranding: 1 }
-                        } as any
-                    }}
-                />
-            </div>
+            {/* HTML5 Audio Element (No Visuals Needed) */}
+            <audio
+                ref={audioRef}
+                src={PLAYLIST_DATA[currentTrackIndex]?.audioUrl}
+                onTimeUpdate={handleTimeUpdate}
+                onLoadedMetadata={handleLoadedMetadata}
+                onEnded={handleEnded}
+                preload="auto"
+                className="hidden"
+            />
 
             {/* --- MAIN SECTION (Docking Area) --- */}
             <section ref={dockRef} className="relative w-full min-h-[90vh] flex flex-col items-center justify-center py-20">
@@ -305,5 +331,3 @@ export default function ImmersivePlayer({ autoStart = false }: ImmersivePlayerPr
         </>
     );
 }
-
-
