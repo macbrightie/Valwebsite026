@@ -1,0 +1,46 @@
+import type { Config } from "tailwindcss";
+
+const config: Config = {
+    content: [
+        "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+        "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+        "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    ],
+    theme: {
+        extend: {
+            backgroundImage: {
+                "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+                "gradient-conic":
+                    "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+            },
+            fontFamily: {
+                serif: ['var(--font-playfair-display)', 'serif'],
+                sans: ['var(--font-inter)', 'sans-serif'],
+                rustic: ['var(--font-rustic)', 'serif'], // Assuming this exists from previous steps
+                royal: ['var(--font-royal)', 'serif'], // Assuming this exists
+            },
+            animation: {
+                "shimmer-slide":
+                    "shimmer-slide var(--speed) ease-in-out infinite alternate",
+                "spin-around": "spin-around calc(var(--speed) * 2) infinite linear",
+            },
+            keyframes: {
+                "shimmer-slide": {
+                    to: {
+                        transform: "translate(calc(100cqw - 100%), 0)",
+                    },
+                },
+                "spin-around": {
+                    "0%": {
+                        transform: "translateZ(0) rotate(0)",
+                    },
+                    "100%": {
+                        transform: "translateZ(0) rotate(360deg)",
+                    },
+                },
+            },
+        },
+    },
+    plugins: [],
+};
+export default config;
