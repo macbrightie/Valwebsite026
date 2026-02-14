@@ -87,7 +87,7 @@ export default function FrameSequence() {
     }, []);
 
     return (
-        <div className="fixed inset-0 z-0 w-full h-full pointer-events-none mix-blend-screen opacity-60">
+        <div className="fixed inset-0 z-0 w-full h-full pointer-events-none opacity-60">
             <canvas ref={canvasRef} className="block w-full h-full object-cover" />
         </div>
     );
