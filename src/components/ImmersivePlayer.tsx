@@ -70,7 +70,7 @@ export default function ImmersivePlayer({ autoStart = false }: ImmersivePlayerPr
     const [volume, setVolume] = useState(0.8);
     const [progress, setProgress] = useState(0); // 0 to 1
     const [duration, setDuration] = useState(0); // in seconds
-    const [isFloating, setIsFloating] = useState(true); // Default to Floating (Visible at start)
+    const [isFloating, setIsFloating] = useState(false); // Default to Hidden (Docked)
     const [hasMounted, setHasMounted] = useState(false);
 
     // --- Refs ---
@@ -120,18 +120,20 @@ export default function ImmersivePlayer({ autoStart = false }: ImmersivePlayerPr
     useEffect(() => {
         const observer = new IntersectionObserver(
             ([entry]) => {
-                // Logic to match "Snap to Player Section":
-                // 1. If visible: SNAP/DOCK (isFloating = false).
-                // 2. If scrolled past (top < 0): SNAP/DOCK (isFloating = false) so it scrolls away and doesn't cover footer.
-                // 3. If approaching (top > 0): FLOAT (isFloating = true) as a teaser/persistent control.
+                // Logic:
+                // 1. If visible (intersecting): DOCK (isFloating = false).
+                // 2. If scrolled past (top < 0): DOCK (isFloating = false).
+                // 3. If approaching (top > 0) AND Started: FLOAT (isFloating = true).
 
                 if (entry.isIntersecting) {
                     setIsFloating(false);
                 } else {
                     if (entry.boundingClientRect.top < 0) {
-                        setIsFloating(false); // Scrolled past -> Dock (Scroll away)
+                        setIsFloating(false); // Passed it
+                    } else if (autoStart) {
+                        setIsFloating(true);  // Approaching & Started -> Float
                     } else {
-                        setIsFloating(true);  // Approaching -> Float (Teaser)
+                        setIsFloating(false); // Hidden/Docked if not started
                     }
                 }
             },
@@ -141,7 +143,7 @@ export default function ImmersivePlayer({ autoStart = false }: ImmersivePlayerPr
         );
         if (dockRef.current) observer.observe(dockRef.current);
         return () => observer.disconnect();
-    }, []);
+    }, [autoStart]); // Re-run when autoStart changes
 
     // --- Handlers ---
 
