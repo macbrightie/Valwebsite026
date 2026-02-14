@@ -120,18 +120,25 @@ export default function ImmersivePlayer({ autoStart = false }: ImmersivePlayerPr
     useEffect(() => {
         const observer = new IntersectionObserver(
             ([entry]) => {
-                const isVisible = entry.isIntersecting;
-                const isBelowViewport = entry.boundingClientRect.y > 0;
+                // Logic:
+                // 1. If we see the player section (even partially), SNAP/DOCK it.
+                // 2. If we scroll past it (it's above us), FLOAT it.
+                // 3. If we are above it (it's below us), DOCK it (hidden).
 
-                if (isVisible) {
-                    setIsFloating(false);
-                } else if (isBelowViewport) {
-                    setIsFloating(true);
+                if (entry.isIntersecting) {
+                    setIsFloating(false); // Snap to dock when visible
                 } else {
-                    setIsFloating(false);
+                    // If not intersecting, check where it is relative to viewport
+                    if (entry.boundingClientRect.top < 0) {
+                        setIsFloating(true); // We scrolled past it -> Float
+                    } else {
+                        setIsFloating(false); // It's below us -> Keep docked/hidden
+                    }
                 }
             },
-            { threshold: 0, rootMargin: "-100px 0px 0px 0px" }
+            {
+                threshold: 0.1, // Trigger when 10% is visible
+            }
         );
         if (dockRef.current) observer.observe(dockRef.current);
         return () => observer.disconnect();
