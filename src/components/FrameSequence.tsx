@@ -24,7 +24,7 @@ export default function FrameSequence() {
                 const img = new Image();
                 // Pattern: ezgif-frame-001.jpg (3 digits)
                 const paddedIndex = i.toString().padStart(3, '0');
-                img.src = `/mainsequence/ezgif-frame-${paddedIndex}.jpg`;
+                img.src = `/frames/ezgif-frame-${paddedIndex}.jpg`;
                 await new Promise((resolve) => {
                     img.onload = resolve;
                     img.onerror = resolve;

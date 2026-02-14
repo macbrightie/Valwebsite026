@@ -7,13 +7,21 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface CustomAudioPlayerProps {
     playlistUrl: string;
+    autoStart?: boolean;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ReactPlayerAny = ReactPlayer as any;
 
-export default function CustomAudioPlayer({ playlistUrl }: CustomAudioPlayerProps) {
+export default function CustomAudioPlayer({ playlistUrl, autoStart = false }: CustomAudioPlayerProps) {
     const [isPlaying, setIsPlaying] = useState(false);
+
+    // Auto-start when the prop changes to true
+    useEffect(() => {
+        if (autoStart) {
+            setIsPlaying(true);
+        }
+    }, [autoStart]);
 
     const [isReady, setIsReady] = useState(false);
     const [volume, setVolume] = useState(0.5);

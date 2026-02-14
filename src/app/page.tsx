@@ -4,7 +4,7 @@ import { ReactLenis } from 'lenis/react';
 import { motion, useScroll, AnimatePresence } from "framer-motion";
 import CinematicLetter from "@/components/CinematicLetter";
 import SwiperGallery from "@/components/SwiperGallery";
-import ImmersivePlayer from "@/components/ImmersivePlayer";
+import CustomAudioPlayer from "@/components/CustomAudioPlayer";
 import Footer from "@/components/Footer";
 import FrameSequence from "@/components/FrameSequence";
 import CustomCursor from "@/components/CustomCursor";
@@ -119,7 +119,7 @@ export default function Home() {
         <SwiperGallery images={VALENTINE_DATA.galleryImages} />
 
         {/* Immersive 3D Player */}
-        <ImmersivePlayer playlistUrl={VALENTINE_DATA.playlistURL} autoStart={hasEntered} />
+        <CustomAudioPlayer playlistUrl={VALENTINE_DATA.playlistURL} autoStart={hasEntered} />
 
         {/* Footer */}
         <Footer />
